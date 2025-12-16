@@ -20,6 +20,7 @@ interface MockMarker {
 export class MapComponent implements OnInit, AfterViewInit {
   private map!: L.Map;
   private currentMarkers: L.Marker[] = [];
+  private currentPolyline: L.Polyline | null = null;
   mockMarkers: MockMarker[] = [];
   selectedLocation: MockMarker | null = null;
   selectedPhoto: PhotoDTO | null = null;
@@ -156,13 +157,23 @@ export class MapComponent implements OnInit, AfterViewInit {
         console.log('📸 PASO 5: Fotos recibidas desde servicio:', photos);
         console.log('📸 PASO 6: Número de fotos:', photos.length);
 
-        // Limpiar marcadores existentes
+        // Limpiar marcadores y línea existentes
         this.currentMarkers.forEach(marker => this.map.removeLayer(marker));
         this.currentMarkers = [];
 
+        if (this.currentPolyline) {
+          this.map.removeLayer(this.currentPolyline);
+          this.currentPolyline = null;
+        }
+
+        const routeCoordinates: L.LatLngExpression[] = [];
+
         photos.forEach((photo) => {
           if (photo.coordinates) {
-            const marker = L.marker([photo.coordinates.latitude, photo.coordinates.longitude])
+            const latLng: L.LatLngExpression = [photo.coordinates.latitude, photo.coordinates.longitude];
+            routeCoordinates.push(latLng);
+
+            const marker = L.marker(latLng)
               .addTo(this.map)
               .bindPopup(`
                  <div style="text-align: center;">
@@ -177,6 +188,20 @@ export class MapComponent implements OnInit, AfterViewInit {
             this.currentMarkers.push(marker);
           }
         });
+
+        // Dibujar línea conectando los puntos (Estilo Google Street View)
+        if (routeCoordinates.length > 1) {
+          this.currentPolyline = L.polyline(routeCoordinates, {
+            color: '#3b82f6', // Azul brillante
+            weight: 5,
+            opacity: 0.7,
+            smoothFactor: 1
+          }).addTo(this.map);
+
+          // Opcional: Ajustar vista para ver toda la ruta
+          // this.map.fitBounds(this.currentPolyline.getBounds());
+          console.log('🛣️ Ruta dibujada con', routeCoordinates.length, 'puntos');
+        }
 
 
         if (photos.length > 0) {
