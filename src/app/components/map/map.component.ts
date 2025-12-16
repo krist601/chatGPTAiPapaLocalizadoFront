@@ -19,6 +19,7 @@ interface MockMarker {
 })
 export class MapComponent implements OnInit, AfterViewInit {
   private map!: L.Map;
+  private currentMarkers: L.Marker[] = [];
   mockMarkers: MockMarker[] = [];
   selectedLocation: MockMarker | null = null;
   selectedPhoto: PhotoDTO | null = null;
@@ -155,6 +156,29 @@ export class MapComponent implements OnInit, AfterViewInit {
         console.log('📸 PASO 5: Fotos recibidas desde servicio:', photos);
         console.log('📸 PASO 6: Número de fotos:', photos.length);
 
+        // Limpiar marcadores existentes
+        this.currentMarkers.forEach(marker => this.map.removeLayer(marker));
+        this.currentMarkers = [];
+
+        photos.forEach((photo) => {
+          if (photo.coordinates) {
+            const marker = L.marker([photo.coordinates.latitude, photo.coordinates.longitude])
+              .addTo(this.map)
+              .bindPopup(`
+                 <div style="text-align: center;">
+                   <p><strong>📸 Photo Available</strong></p>
+                   <small>Click to view</small>
+                 </div>
+               `)
+              .on('click', () => {
+                this.selectedPhoto = photo;
+                this.streetViewService.showStreetView(photo);
+              });
+            this.currentMarkers.push(marker);
+          }
+        });
+
+
         if (photos.length > 0) {
           this.selectedPhoto = photos[0];
           console.log('✅ PASO 7: Foto seleccionada asignada:', this.selectedPhoto);
@@ -163,10 +187,19 @@ export class MapComponent implements OnInit, AfterViewInit {
           console.log('✅ PASO 9: ¡Foto enviada al servicio exitosamente!');
         } else {
           console.log('❌ PASO 7: No se encontraron fotos');
+          // Informar al usuario
+          L.popup()
+            .setLatLng([coordinates.latitude, coordinates.longitude])
+            .setContent('<p>⚠️ No images found at this location.</p>')
+            .openOn(this.map);
         }
       },
       error: (error) => {
         console.error('💥 ERROR en loadPhotos:', error);
+        L.popup()
+          .setLatLng([coordinates.latitude, coordinates.longitude])
+          .setContent('<p>❌ Error loading images.</p>')
+          .openOn(this.map);
       }
     });
   }

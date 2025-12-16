@@ -38,7 +38,7 @@ export class MapService {
     const params = {
       latitude: coordinates.latitude,
       longitude: coordinates.longitude,
-      radius: 1000
+      radius: 10000
     };
 
     // URL relativa que será interceptada por el proxy
@@ -79,26 +79,67 @@ export class MapService {
             console.warn('📄 Recibido:', items[0]);
           }
 
-          return items.map((item: any) => ({
-            id: item.id,
-            url: item.url || 'https://via.placeholder.com/800x400?text=No+Image',
-            is360: true,
-            coordinates: {
-              latitude: item.latitude,
-              longitude: item.longitude
-            },
-            timestamp: new Date(),
-            direction: 0,
-            pitch: 0,
-            yaw: 0,
-            panoramaType: 'equirectangular' as const,
-            metadata: {
-              resolution: 'unknown',
-              camera: 'unknown',
-              streetName: 'Unknown Location',
-              description: 'Photo from API'
+          return items.map((item: any) => {
+            // Reescribir la URL para usar el proxy y evitar CORS
+            // Si la URL es absoluta y apunta a ngrok, la cambiamos a relativa
+            let imageUrl = item.url || 'https://via.placeholder.com/800x400?text=No+Image';
+            // Check if it's an ngrok URL (http or https)
+            if (imageUrl.includes('ngrok-free.app')) {
+              // We need to extract the path part.
+              // Assuming URL is like https://xyz.ngrok-free.app/resource/image.jpg
+              // We want /resource/image.jpg prefixed with /api
+              // The proxy target is fixed in proxy.conf.json, so this assumes the domain matches the target.
+
+              try {
+                const urlObj = new URL(imageUrl);
+                imageUrl = `/api${urlObj.pathname}${urlObj.search}`;
+                console.log(`🔀 URL Reescrita para Proxy (Ngrok): ${item.url} -> ${imageUrl}`);
+              } catch (e) {
+                console.error('Error parsing Ngrok URL', imageUrl);
+              }
+            } else if (imageUrl.includes('s3.us-east-2.amazonaws.com')) {
+              // Lógica nueva para S3
+              try {
+                // URL original: https://360images-fhd-street.s3.us-east-2.amazonaws.com/guid/img.jpg
+                // URL deseada: /s3-proxy/guid/img.jpg
+                // El target del proxy es el dominio, así que solo necesitamos el pathname
+                const urlObj = new URL(imageUrl);
+                imageUrl = `/s3-proxy${urlObj.pathname}${urlObj.search}`;
+                console.log(`🔀 URL Reescrita para Proxy (S3): ${item.url} -> ${imageUrl}`);
+              } catch (e) {
+                console.error('Error parsing S3 URL', imageUrl);
+              }
+            } else if (imageUrl.startsWith('http')) {
+              // External URL not matching our proxy target.
+              // We leave it as is, or could have a generic proxy.
+            } else {
+              // Si ya es relativa, asegurar que empiece con /api si no lo hace
+              if (!imageUrl.startsWith('/api') && !imageUrl.startsWith('/assets')) {
+                imageUrl = `/api${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+              }
             }
-          }));
+
+            return {
+              id: item.id,
+              url: imageUrl,
+              is360: true,
+              coordinates: {
+                latitude: item.latitude,
+                longitude: item.longitude
+              },
+              timestamp: new Date(),
+              direction: 0,
+              pitch: 0,
+              yaw: 0,
+              panoramaType: 'equirectangular' as const,
+              metadata: {
+                resolution: 'unknown',
+                camera: 'unknown',
+                streetName: 'Unknown Location',
+                description: 'Photo from API'
+              }
+            };
+          });
         } catch (e) {
           console.error('🚨 ERROR CRÍTICO DE PARSEO JSON 🚨');
           console.error('El servidor no devolvió JSON válido. Probablemente devolvió HTML (error de ngrok o 404).');

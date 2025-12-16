@@ -6,6 +6,20 @@
         "pathRewrite": {
             "^/api": ""
         },
+        "headers": {
+            "ngrok-skip-browser-warning": "true",
+            "User-Agent": "Angular-Local-Proxy",
+            "Origin": "https://2686a7c7f2bf.ngrok-free.app"
+        },
+        "logLevel": "debug"
+    },
+    "/s3-proxy": {
+        "target": "https://360images-fhd-street.s3.us-east-2.amazonaws.com",
+        "secure": false,
+        "changeOrigin": true,
+        "pathRewrite": {
+            "^/s3-proxy": ""
+        },
         "logLevel": "debug"
     }
 }

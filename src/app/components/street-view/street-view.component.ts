@@ -1,7 +1,8 @@
-import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { StreetViewService } from '../../services/street-view.service';
 import { PhotoDTO } from '../../models/photo.dto';
+import { HttpClient } from '@angular/common/http';
 
 declare var pannellum: any; // Declarar pannellum para TypeScript
 
@@ -17,16 +18,26 @@ export class StreetViewComponent implements OnInit, OnDestroy, AfterViewInit {
   currentYaw: number = 0;
   currentPitch: number = 0;
   currentZoom: number = 100;
-  
-  constructor(private streetViewService: StreetViewService) {}
+  private currentBlobUrl: string | null = null;
+
+  constructor(
+    private streetViewService: StreetViewService,
+    private cdr: ChangeDetectorRef,
+    private http: HttpClient
+  ) { }
 
   ngOnInit(): void {
     this.subscription.add(
       this.streetViewService.currentPhoto$.subscribe(photo => {
         console.log('📥 StreetViewComponent recibió foto:', photo);
         this.photo = photo;
+
+        // Forzar detección de cambios para asegurar que el DOM se actualice (vfs *ngIf)
+        this.cdr.detectChanges();
+
         if (photo) {
           console.log('🎯 Inicializando visor para foto:', photo.url);
+          // Un pequeño timeout para asegurar que el contenedor está renderizado
           setTimeout(() => this.init360Viewer(), 100);
         } else if (this.viewer) {
           console.log('🔄 Destruyendo visor anterior');
@@ -62,84 +73,110 @@ export class StreetViewComponent implements OnInit, OnDestroy, AfterViewInit {
   private init360Viewer(): void {
     if (!this.photo) return;
 
-    console.log('🔧 Inicializando visor para foto:', this.photo);
-    
-    this.destroy360Viewer(); // Limpiar viewer anterior si existe
+    // FETCH MANUAL DE LA IMAGEN
+    // Usamos HttpClient para descargar la imagen como Blob.
+    console.log('⬇️ Descargando imagen manualmente:', this.photo.url);
+
+    this.http.get(this.photo.url, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        console.log('✅ Imagen descargada (Blob):', blob.size, 'bytes');
+
+        // Crear URL local para el Blob
+        if (this.currentBlobUrl) {
+          URL.revokeObjectURL(this.currentBlobUrl);
+        }
+        this.currentBlobUrl = URL.createObjectURL(blob);
+        console.log('🔗 Blob URL creada:', this.currentBlobUrl);
+
+        this.createPannellumViewer(this.currentBlobUrl);
+      },
+      error: (err) => {
+        console.error('❌ Error descargando la imagen:', err);
+        alert('Error downloading image. See console.');
+      }
+    });
+  }
+
+  private createPannellumViewer(imageUrl: string): void {
+    console.log('🔧 Inicializando Pannellum con URL local..');
+
+    this.destroy360Viewer();
+
+    // Verificar Pannellum
+    if (typeof pannellum === 'undefined') {
+      console.error('❌ Pannellum no está cargado.');
+      // Reintentar una vez tras un pequeño delay por si es carrera de carga
+      setTimeout(() => {
+        if (typeof pannellum !== 'undefined') {
+          this.createPannellumViewer(imageUrl);
+        } else {
+          console.error('❌ Falló reintento de inicialización de Pannellum');
+        }
+      }, 500);
+      return;
+    }
 
     try {
-      // Verificar si el elemento contenedor existe
       const container = document.getElementById('panorama-container');
       if (!container) {
-        console.error('❌ No se encontró el contenedor panorama-container');
+        console.error('❌ No se encontró el contenedor panorama-container. El *ngIf podría no haber renderizado aún.');
         return;
       }
-
       console.log('✅ Contenedor encontrado, creando visor...');
 
       this.viewer = pannellum.viewer('panorama-container', {
         type: 'equirectangular',
-        panorama: this.photo.url,
+        panorama: imageUrl, // Usamos la URL del blob
         autoLoad: true,
-        pitch: this.photo.pitch || 0,
-        yaw: this.photo.yaw || 0,
+        pitch: this.photo?.pitch || 0,
+        yaw: this.photo?.yaw || 0,
         hfov: 90,
-        
-        // Controles de navegación
+
         mouseZoom: true,
         keyboardZoom: true,
         doubleClickZoom: true,
         scrollZoom: true,
-        
-        // Límites flexibles para cualquier tipo de imagen
-        minHfov: 20,  // Zoom máximo
-        maxHfov: 140, // Zoom mínimo
-        minPitch: -90, // Sin límite hacia abajo
-        maxPitch: 90,  // Sin límite hacia arriba
-        
-        // Configuración suave
+        minHfov: 20,
+        maxHfov: 140,
+        minPitch: -90,
+        maxPitch: 90,
         friction: 0.15,
-        
-        // Sin controles nativos
         showControls: false,
         showFullscreenCtrl: false,
         showZoomCtrl: false,
-        
         autoRotate: 0,
-        
-        // Configuración de carga
         loadButtonLabel: 'Click to Load Image',
         nothingFoundLabel: 'Image not found',
-        
-        // Eventos
+        crossOrigin: 'anonymous',
+
         onload: () => {
-          console.log('✅ Imagen cargada exitosamente:', this.photo?.url);
+          console.log('✅ Visor Pannellum cargado correctamente');
           this.updateViewInfo();
           this.startViewTracking();
         },
-        
+
         onerror: (error: string) => {
-          console.error('❌ Error cargando imagen:', error, 'URL:', this.photo?.url);
+          console.error('❌ Error interno Pannellum:', error);
+          alert(`Pannellum Error: ${error}`);
         }
       });
-
       console.log('🎯 Visor creado exitosamente');
 
-      // Agregar eventos de teclado personalizados
       document.addEventListener('keydown', this.handleKeyboardNavigation.bind(this));
-      
+
     } catch (error) {
-      console.error('💥 Error crítico al inicializar el visor:', error);
+      console.error('💥 Error crítico Pannellum:', error);
     }
   }
 
   private handleKeyboardNavigation(event: KeyboardEvent): void {
     if (!this.viewer || !this.photo?.is360) return;
-    
+
     const currentYaw = this.viewer.getYaw();
     const currentPitch = this.viewer.getPitch();
     const currentHfov = this.viewer.getHfov();
-    
-    switch(event.key) {
+
+    switch (event.key) {
       case 'ArrowLeft':
         this.viewer.setYaw(currentYaw - 10);
         event.preventDefault();
