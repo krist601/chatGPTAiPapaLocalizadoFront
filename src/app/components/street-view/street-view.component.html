@@ -1,0 +1,95 @@
+<div class="street-view">
+  <h2>Street View</h2>
+  
+  <!-- Visor simple para fotos -->
+  <div class="photo-viewer" *ngIf="photo">
+    
+    <!-- Contenedor para Pannellum (360°) -->
+    <div id="panorama-container" *ngIf="photo.is360" class="panorama-viewer"></div>
+    
+    <!-- Imagen simple para fotos regulares -->
+    <img *ngIf="!photo.is360" [src]="photo.url" alt="Street View Photo" class="street-photo" 
+         (load)="onImageLoad()" (error)="onImageError($event)"/>
+    
+    <div class="photo-overlay">
+      <h3>📍 {{ photo.metadata?.streetName || 'Unknown Location' }}</h3>
+      <p>{{ photo.metadata?.description || 'Street view photo' }}</p>
+    </div>
+    
+    <!-- Controles simples -->
+    <div class="simple-controls">
+      <button (click)="closePhoto()" class="nav-btn close-btn">✕ Close</button>
+    </div>
+    
+    <!-- Controles específicos para 360° -->
+    <div class="panorama-controls" *ngIf="photo.is360">
+      <div class="control-group movement">
+        <button (click)="moveBackward()" class="nav-btn move">← Back</button>
+        <button (click)="moveForward()" class="nav-btn move">Forward →</button>
+      </div>
+      <div class="control-group rotation">
+        <button (click)="turnLeft()" class="nav-btn">↺ Left</button>
+        <button (click)="turnRight()" class="nav-btn">↻ Right</button>
+      </div>
+      <div class="control-group zoom">
+        <button (click)="zoomIn()" class="nav-btn zoom">🔍+ In</button>
+        <button (click)="zoomOut()" class="nav-btn zoom">🔍- Out</button>
+      </div>
+      <div class="control-group special">
+        <button (click)="resetView()" class="nav-btn reset">🎯 Reset</button>
+        <button (click)="toggleFullscreen()" class="nav-btn fullscreen">⛶ Fullscreen</button>
+      </div>
+    </div>
+    
+    <!-- Información de navegación -->
+    <div class="nav-info" *ngIf="photo.is360">
+      <div class="view-info">
+        <span class="label">View:</span>
+        <span class="value">{{ currentYaw | number:'1.0-0' }}° | {{ currentPitch | number:'1.0-0' }}°</span>
+      </div>
+      <div class="zoom-info">
+        <span class="label">Zoom:</span>
+        <span class="value">{{ currentZoom | number:'1.0-0' }}%</span>
+      </div>
+    </div>
+    
+    <!-- Información de la foto -->
+    <div class="photo-info">
+      <div class="photo-type-badge" [class.is-360]="photo.is360">
+        {{ photo.is360 ? '360° PANORAMA' : 'REGULAR PHOTO' }}
+      </div>
+      <p><strong>📍 Location:</strong> {{ photo.coordinates.latitude | number:'1.4-4' }}, {{ photo.coordinates.longitude | number:'1.4-4' }}</p>
+      <p><strong>🧭 Direction:</strong> {{ photo.direction }}°</p>
+      <p><strong>📷 Camera:</strong> {{ photo.metadata?.camera || 'Unknown' }}</p>
+      <p *ngIf="photo.metadata?.streetName"><strong>🛣️ Street:</strong> {{ photo.metadata.streetName }}</p>
+      <p><strong>📐 Resolution:</strong> {{ photo.metadata?.resolution || 'Unknown' }}</p>
+      <p *ngIf="photo.is360 && photo.pitch !== undefined"><strong>⬆️ Pitch:</strong> {{ photo.pitch }}°</p>
+      <p *ngIf="photo.is360 && photo.yaw !== undefined"><strong>🔄 Yaw:</strong> {{ photo.yaw }}°</p>
+    </div>
+  </div>
+  
+  <!-- Pantalla de bienvenida -->
+  <div class="no-photo" *ngIf="!photo">
+    <h3>🌎 Explore Street View</h3>
+    <p>Click on any marker in the map to start exploring 360° panoramic photos</p>
+    
+    <div class="features-list">
+      <div class="feature">
+        <span class="icon">🗺️</span>
+        <span>Interactive world map</span>
+      </div>
+      <div class="feature">
+        <span class="icon">📸</span>
+        <span>360° panoramic photos</span>
+      </div>
+      <div class="feature">
+        <span class="icon">🎮</span>
+        <span>Full navigation controls</span>
+      </div>
+      <div class="feature">
+        <span class="icon">🔍</span>
+        <span>Zoom and explore details</span>
+      </div>
+    </div>
+  </div>
+</div>

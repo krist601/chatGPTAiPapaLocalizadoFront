@@ -1,0 +1,88 @@
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.app-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1rem;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.app-header h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 300;
+}
+
+.app-main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.map-section {
+    flex: 1;
+    border-right: 1px solid #ddd;
+}
+
+.street-view-section {
+    flex: 1;
+    position: relative;
+}
+
+.app-footer {
+    background: #f8f9fa;
+    border-top: 1px solid #ddd;
+    padding: 0.5rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .app-main {
+        flex-direction: column;
+    }
+    
+    .map-section {
+        border-right: none;
+        border-bottom: 1px solid #ddd;
+        flex: 0 0 40%;
+    }
+    
+    .street-view-section {
+        flex: 1;
+    }
+}
+
+.map-container {
+    height: 80vh;
+    width: 100%;
+    position: relative;
+}
+
+.street-view-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.photo {
+    max-width: 100%;
+    max-height: 100%;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+}
+
+.navigation {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+}

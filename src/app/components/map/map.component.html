@@ -1,0 +1,64 @@
+<div class="map-container">
+  <div class="map-area">
+    <div id="map"></div>
+    
+    <!-- Panel de información lateral -->
+    <div class="info-panel" [class.expanded]="selectedLocation">
+      <div class="panel-header">
+        <h3>📍 Location Details</h3>
+        <button class="close-btn" *ngIf="selectedLocation" (click)="clearSelection()">✕</button>
+      </div>
+      
+      <div *ngIf="!selectedLocation" class="welcome-info">
+        <div class="icon">🗺️</div>
+        <h4>Welcome to Street View Explorer</h4>
+        <p>Click on any marker to explore 360° panoramic photos and street views.</p>
+        
+        <!-- BOTÓN DE PRUEBA TEMPORAL -->
+        <button (click)="testButtonFunctionality()" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin: 10px 0; cursor: pointer;">
+          🧪 TEST: Probar Botón (Debug)
+        </button>
+        
+        <ul class="features">
+          <li>🎮 Interactive map navigation</li>
+          <li>📸 High-quality 360° photos</li>
+          <li>🔍 Zoom and pan controls</li>
+          <li>⌨️ Keyboard shortcuts support</li>
+        </ul>
+      </div>
+      
+      <div *ngIf="selectedLocation" class="location-details">
+        <div class="location-header">
+          <h4>📌 Selected Location</h4>
+          <div class="coordinates">
+            <span>Lat: {{ selectedLocation.lat | number:'1.6-6' }}</span>
+            <span>Lng: {{ selectedLocation.lng | number:'1.6-6' }}</span>
+          </div>
+        </div>
+        
+        <div class="location-info">
+          <div class="info-badge">
+            📸 360°
+          </div>
+          <span>Panoramic Photo Available</span>
+        </div>
+        
+        <div class="actions">
+          <button class="explore-btn" (click)="exploreLocation(selectedLocation)">
+            🚀 Explore Street View
+          </button>
+        </div>
+        
+        <div class="tips">
+          <h5>💡 Navigation Tips:</h5>
+          <ul>
+            <li>🖱️ Use mouse to look around</li>
+            <li>⚡ Scroll to zoom in/out</li>
+            <li>⌨️ Arrow keys for movement</li>
+            <li>🔍 +/- keys for fine zoom</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

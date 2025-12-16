@@ -1,0 +1,446 @@
+.street-view {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.street-view h2 {
+    position: absolute;
+    top: 10px;
+    left: 15px;
+    z-index: 1001;
+    margin: 0;
+    color: white;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+/* Contenedor para Pannellum */
+#panorama-container {
+    width: 100%;
+    height: 500px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f0f0f0;
+    position: relative;
+    min-height: 400px;
+    cursor: grab;
+}
+
+#panorama-container:active {
+    cursor: grabbing;
+}
+
+/* Visor para fotos 360 */
+.panorama-viewer {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.panorama-container {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    /* Optimizar para navegación por scroll */
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.panorama-container:active {
+    cursor: grabbing;
+}
+
+/* Mejorar el rendimiento de navegación */
+.panorama-container canvas {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+}
+
+/* Enhanced Panorama Controls */
+.panorama-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 16px;
+    border-radius: 25px;
+    z-index: 1001;
+    max-width: 90%;
+    justify-content: center;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.control-group {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.control-group.movement .nav-btn {
+    background: rgba(76, 175, 80, 0.9);
+}
+
+.control-group.rotation .nav-btn {
+    background: rgba(33, 150, 243, 0.9);
+}
+
+.control-group.zoom .nav-btn {
+    background: rgba(255, 193, 7, 0.9);
+}
+
+.control-group.special .nav-btn {
+    background: rgba(156, 39, 176, 0.9);
+}
+
+.nav-btn.reset {
+    background: rgba(255, 87, 34, 0.9) !important;
+}
+
+.nav-btn.fullscreen {
+    background: rgba(96, 125, 139, 0.9) !important;
+}
+
+/* Visor para fotos regulares */
+.regular-photo-viewer {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+}
+
+.street-photo {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.navigation-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 12px;
+    border-radius: 25px;
+    z-index: 1001;
+}
+
+.nav-btn {
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    padding: 12px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    min-width: auto;
+}
+
+.nav-btn:hover {
+    background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px);
+}
+
+.nav-btn.zoom {
+    background: rgba(100, 181, 246, 0.9);
+    color: white;
+}
+
+.nav-btn.zoom:hover {
+    background: #42a5f5;
+}
+
+.photo-info {
+    position: absolute;
+    top: 60px;
+    right: 15px;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 20px;
+    border-radius: 12px;
+    max-width: 320px;
+    z-index: 1001;
+    backdrop-filter: blur(10px);
+}
+
+.photo-type-badge {
+    display: inline-block;
+    background: #ff5722;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+}
+
+.photo-type-badge.is-360 {
+    background: #4caf50;
+}
+
+.photo-info p {
+    margin: 8px 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+/* Navigation Info */
+.nav-info {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 15px;
+    z-index: 1001;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    min-width: 140px;
+    animation: fadeInUp 0.6s ease-out 0.3s both;
+}
+
+.view-info, .zoom-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.view-info:last-child, .zoom-info:last-child {
+    margin-bottom: 0;
+}
+
+.label {
+    color: #ccc;
+    font-weight: normal;
+}
+
+.value {
+    color: #4fc3f7;
+    font-weight: bold;
+}
+
+.no-photo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-align: center;
+    padding: 40px;
+}
+
+.no-photo h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.8rem;
+    font-weight: 300;
+}
+
+.no-photo p {
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+    opacity: 0.9;
+}
+
+.features-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.feature {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 12px 20px;
+    border-radius: 25px;
+    backdrop-filter: blur(10px);
+}
+
+.feature .icon {
+    font-size: 1.4rem;
+}
+
+.feature span:last-child {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* Animations and Transitions */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(-50%, 30px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(79, 172, 254, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(79, 172, 254, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(79, 172, 254, 0);
+  }
+}
+
+.explore-btn:hover {
+  animation: pulse 2s infinite;
+}
+
+.count-badge {
+  animation: pulse 3s infinite;
+}
+
+/* Loading Animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3498db;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .photo-info {
+        position: static;
+        margin: 15px;
+        background: rgba(0, 0, 0, 0.9);
+    }
+    
+    .navigation-controls,
+    .panorama-controls {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .nav-btn {
+        padding: 10px 14px;
+        font-size: 0.8rem;
+    }
+    
+    .features-list {
+        gap: 10px;
+    }
+    
+    .feature {
+        padding: 10px 16px;
+    }
+
+    .info-panel {
+        width: calc(100% - 40px);
+        top: 10px;
+        right: 20px;
+        max-height: 60vh;
+    }
+    
+    .panorama-controls {
+        bottom: 10px;
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px;
+        max-width: 95%;
+    }
+    
+    .control-group {
+        justify-content: center;
+    }
+    
+    .nav-btn {
+        padding: 10px 12px;
+        font-size: 0.8rem;
+        min-width: 60px;
+    }
+    
+    .nav-info {
+        top: 10px;
+        right: 10px;
+        font-size: 0.75rem;
+        padding: 8px 12px;
+        min-width: 120px;
+    }
+}
+
+@media (max-width: 480px) {
+    .info-panel {
+        width: calc(100% - 20px);
+        top: 5px;
+        right: 10px;
+        left: 10px;
+        max-height: 50vh;
+    }
+    
+    .panel-header {
+        padding: 12px 16px;
+    }
+    
+    .panel-header h3 {
+        font-size: 1rem;
+    }
+    
+    .welcome-info, .location-details {
+        padding: 16px;
+    }
+    
+    .features li, .tips li {
+        font-size: 0.8rem;
+    }
+    
+    .coordinates {
+        flex-direction: column;
+        gap: 4px;
+        text-align: center;
+    }
+    
+    .nav-info {
+        position: relative;
+        top: auto;
+        right: auto;
+        margin: 10px;
+        display: inline-block;
+    }
+}
