@@ -41,27 +41,73 @@ export class MapService {
       radius: 1000
     };
 
-    return this.http.get<any[]>('https://2686a7c7f2bf.ngrok-free.app/photos', { params }).pipe(
-      map(response => response.map(item => ({
-        id: item.id,
-        url: item.url || 'https://via.placeholder.com/800x400?text=No+Image', // Fallback if url missing
-        is360: true, // Assuming true as before
-        coordinates: {
-          latitude: item.latitude,
-          longitude: item.longitude
-        },
-        timestamp: new Date(),
-        direction: 0,
-        pitch: 0,
-        yaw: 0,
-        panoramaType: 'equirectangular' as const,
-        metadata: {
-          resolution: 'unknown',
-          camera: 'unknown',
-          streetName: 'Unknown Location',
-          description: 'Photo from API'
+    // URL relativa que será interceptada por el proxy
+    // /api/photos -> https://2686a7c7f2bf.ngrok-free.app/photos
+    const baseUrl = '/api/photos';
+    console.log(`🌐 API CALL: ${baseUrl} (Proxy -> Ngrok)`);
+
+    // Headers para evitar la página de advertencia de ngrok (por si acaso)
+    const headers = {
+      'ngrok-skip-browser-warning': 'true'
+    };
+
+    // Usamos responseType: 'text' para poder capturar respuestas HTML de error
+    return this.http.get(baseUrl, { params, headers, responseType: 'text' }).pipe(
+      map(response => {
+        try {
+          // Intentar parsear el texto a JSON manualmente
+          const items = JSON.parse(response);
+
+          if (!Array.isArray(items)) {
+            console.error('⚠️ La respuesta no es un array:', items);
+            return [];
+          }
+
+          // Verificar estructura del DTO
+          const isValid = items.every((item: any) =>
+            item.hasOwnProperty('id') &&
+            item.hasOwnProperty('latitude') &&
+            item.hasOwnProperty('longitude') &&
+            item.hasOwnProperty('url')
+          );
+
+          if (isValid) {
+            console.log('✅ DTO Validado correctamente: Estructura correcta');
+            console.log('📄 Ejemplo de item recibido:', items[0]);
+          } else {
+            console.warn('⚠️ ALERTA: El formato recibidio NO coincide con el esperado {id, latitude, longitude, url}');
+            console.warn('📄 Recibido:', items[0]);
+          }
+
+          return items.map((item: any) => ({
+            id: item.id,
+            url: item.url || 'https://via.placeholder.com/800x400?text=No+Image',
+            is360: true,
+            coordinates: {
+              latitude: item.latitude,
+              longitude: item.longitude
+            },
+            timestamp: new Date(),
+            direction: 0,
+            pitch: 0,
+            yaw: 0,
+            panoramaType: 'equirectangular' as const,
+            metadata: {
+              resolution: 'unknown',
+              camera: 'unknown',
+              streetName: 'Unknown Location',
+              description: 'Photo from API'
+            }
+          }));
+        } catch (e) {
+          console.error('🚨 ERROR CRÍTICO DE PARSEO JSON 🚨');
+          console.error('El servidor no devolvió JSON válido. Probablemente devolvió HTML (error de ngrok o 404).');
+          console.error('CONTENIDO RECIBIDO (Primeros 500 caracteres):');
+          console.error(response.substring(0, 500));
+          console.error('------------------------------------------');
+          throw new Error('API Response was not valid JSON. Check console for details.');
         }
-      })))
+      })
     );
   }
 }

@@ -71,7 +71,8 @@
               "buildTarget": "chatGPTAiPapaLocalizadoFront:build:production"
             },
             "development": {
-              "buildTarget": "chatGPTAiPapaLocalizadoFront:build:development"
+              "buildTarget": "chatGPTAiPapaLocalizadoFront:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"

@@ -24,12 +24,11 @@ export class MapComponent implements OnInit, AfterViewInit {
   selectedPhoto: PhotoDTO | null = null;
 
   constructor(
-    private mapService: MapService, 
+    private mapService: MapService,
     private streetViewService: StreetViewService
-  ) {}
+  ) { }
 
   ngOnInit() {
-    this.createMockMarkers();
   }
 
   ngAfterViewInit() {
@@ -37,9 +36,11 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   private initializeMap() {
-    // Crear el mapa centrado en San Francisco con configuración optimizada
+    // Crear el mapa centrado en Pittsburgh (default) con configuración optimizada
+    const pittsburghCoords: [number, number] = [40.4406, -79.9959];
+
     this.map = L.map('map', {
-      center: [37.7749, -122.4194],
+      center: pittsburghCoords,
       zoom: 13,
       zoomControl: true,
       attributionControl: true,
@@ -47,6 +48,39 @@ export class MapComponent implements OnInit, AfterViewInit {
       doubleClickZoom: true,
       trackResize: true
     });
+
+    // Cargar fotos automáticamente en la ubicación por defecto
+    this.loadPhotos({
+      latitude: pittsburghCoords[0],
+      longitude: pittsburghCoords[1]
+    });
+
+    // Intentar obtener la ubicación del usuario
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const userLat = position.coords.latitude;
+          const userLng = position.coords.longitude;
+          console.log('📍 Ubicación del usuario encontrada:', userLat, userLng);
+          this.map.setView([userLat, userLng], 13);
+
+          // Opcional: Agregar un marcador en la ubicación del usuario
+          L.marker([userLat, userLng])
+            .addTo(this.map)
+            .bindPopup('Tu ubicación')
+            .openPopup();
+
+          // Cargar fotos de la nueva ubicación del usuario
+          this.loadPhotos({
+            latitude: userLat,
+            longitude: userLng
+          });
+        },
+        (error) => {
+          console.warn('⚠️ No se pudo obtener la ubicación del usuario, usando default (Pittsburgh).', error);
+        }
+      );
+    }
 
     // Agregar tiles de OpenStreetMap con configuración mejorada para alineación
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -99,22 +133,12 @@ export class MapComponent implements OnInit, AfterViewInit {
     });
   }
 
-  createMockMarkers() {
-    // Crear algunos mock markers para demostración
-    this.mockMarkers = [
-      { lat: 37.7749, lng: -122.4194, x: 150, y: 100 },
-      { lat: 37.7849, lng: -122.4094, x: 300, y: 150 },
-      { lat: 37.7649, lng: -122.4294, x: 200, y: 250 },
-      { lat: 37.7549, lng: -122.4394, x: 400, y: 200 }
-    ];
-  }
-
   onMapClick(event: L.LeafletMouseEvent) {
     const coordinates: CoordinatesDTO = {
       latitude: event.latlng.lat,
       longitude: event.latlng.lng
     };
-    
+
     this.loadPhotos(coordinates);
   }
 
@@ -125,12 +149,12 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   loadPhotos(coordinates: CoordinatesDTO) {
     console.log('🔄 PASO 4: loadPhotos() iniciado con:', coordinates);
-    
+
     this.mapService.getPhotosByCoordinates(coordinates).subscribe({
       next: (photos) => {
         console.log('📸 PASO 5: Fotos recibidas desde servicio:', photos);
         console.log('📸 PASO 6: Número de fotos:', photos.length);
-        
+
         if (photos.length > 0) {
           this.selectedPhoto = photos[0];
           console.log('✅ PASO 7: Foto seleccionada asignada:', this.selectedPhoto);
@@ -160,17 +184,17 @@ export class MapComponent implements OnInit, AfterViewInit {
   exploreLocation(location: MockMarker) {
     // Cargar y mostrar la foto cuando se hace clic en "Explore"
     console.log('🚀 PASO 1: exploreLocation() llamado con:', location);
-    
+
     if (!location) {
       console.error('❌ ERRO: location es null o undefined');
       return;
     }
-    
+
     const coordinates: CoordinatesDTO = {
       latitude: location.lat,
-      longitude: location.lng
+      longitude: location.lng,
     };
-    
+
     console.log('🚀 PASO 2: Coordenadas creadas:', coordinates);
     console.log('🚀 PASO 3: Llamando a loadPhotos()...');
     this.loadPhotos(coordinates);
@@ -181,12 +205,12 @@ export class MapComponent implements OnInit, AfterViewInit {
     console.log('🧪 TEST: Iniciando prueba manual del botón...');
     console.log('🧪 TEST: selectedLocation:', this.selectedLocation);
     console.log('🧪 TEST: mockMarkers:', this.mockMarkers);
-    
+
     // Simular selección de primer marker
     if (this.mockMarkers.length > 0) {
       this.selectedLocation = this.mockMarkers[0];
       console.log('🧪 TEST: Location seleccionada:', this.selectedLocation);
-      
+
       setTimeout(() => {
         console.log('🧪 TEST: Llamando exploreLocation...');
         this.exploreLocation(this.selectedLocation!);
