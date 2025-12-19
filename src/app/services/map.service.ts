@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import { StreetSegmentDTO } from '../models/street-segment.dto';
 import { CoordinatesDTO } from '../models/coordinates.dto';
 import { PhotoDTO } from '../models/photo.dto';
+import * as L from 'leaflet';
 
 @Injectable({
   providedIn: 'root'
@@ -38,7 +39,7 @@ export class MapService {
     const params = {
       latitude: coordinates.latitude,
       longitude: coordinates.longitude,
-      radius: 10000
+      radius: coordinates.radius || 10000
     };
 
     // URL relativa que será interceptada por el proxy
@@ -60,7 +61,7 @@ export class MapService {
 
           if (!Array.isArray(items)) {
             console.error('⚠️ La respuesta no es un array:', items);
-            return [];
+            return [] as PhotoDTO[];
           }
 
           // Verificar estructura del DTO
@@ -79,7 +80,7 @@ export class MapService {
             console.warn('📄 Recibido:', items[0]);
           }
 
-          return items.map((item: any) => {
+          const mappedItems = items.map((item: any) => {
             // Reescribir la URL para usar el proxy y evitar CORS
             // Si la URL es absoluta y apunta a ngrok, la cambiamos a relativa
             let imageUrl = item.url || 'https://via.placeholder.com/800x400?text=No+Image';
@@ -127,7 +128,7 @@ export class MapService {
                 latitude: item.latitude,
                 longitude: item.longitude
               },
-              timestamp: new Date(),
+              timestamp: item.timestamp,
               direction: 0,
               pitch: 0,
               yaw: 0,
@@ -140,6 +141,24 @@ export class MapService {
               }
             };
           });
+
+          // Filtrado del lado del cliente si se especifica un radio
+          if (coordinates.radius) {
+            console.log(`🔍 Filtrando resultados localmente. Radio: ${coordinates.radius}m`);
+            const center = L.latLng(coordinates.latitude, coordinates.longitude);
+            const initialCount = mappedItems.length;
+
+            const filteredItems = mappedItems.filter((item: any) => {
+              const itemLoc = L.latLng(item.coordinates.latitude, item.coordinates.longitude);
+              const dist = center.distanceTo(itemLoc);
+              return dist <= coordinates.radius!;
+            });
+
+            console.log(`📉 Filtrado: ${initialCount} -> ${filteredItems.length} fotos`);
+            return filteredItems as PhotoDTO[];
+          }
+
+          return mappedItems as PhotoDTO[];
         } catch (e) {
           console.error('🚨 ERROR CRÍTICO DE PARSEO JSON 🚨');
           console.error('El servidor no devolvió JSON válido. Probablemente devolvió HTML (error de ngrok o 404).');

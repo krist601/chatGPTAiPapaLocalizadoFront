@@ -136,9 +136,19 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   onMapClick(event: L.LeafletMouseEvent) {
+    // Calcular el radio basado en la vista actual (distancia del centro a la esquina)
+    const mapCenter = this.map.getCenter();
+    const mapBounds = this.map.getBounds();
+    const northEast = mapBounds.getNorthEast();
+    let radiusInMeters: number | null = mapCenter.distanceTo(northEast);
+
+    console.log(`📏 Radio calculado basado en zoom: ${Math.round(radiusInMeters)} metros`);
+
+    radiusInMeters = 0;
     const coordinates: CoordinatesDTO = {
       latitude: event.latlng.lat,
-      longitude: event.latlng.lng
+      longitude: event.latlng.lng,
+      radius: radiusInMeters == 0 ? 10000 : Math.round(radiusInMeters)
     };
 
     this.loadPhotos(coordinates);
@@ -156,6 +166,14 @@ export class MapComponent implements OnInit, AfterViewInit {
       next: (photos) => {
         console.log('📸 PASO 5: Fotos recibidas desde servicio:', photos);
         console.log('📸 PASO 6: Número de fotos:', photos.length);
+
+        // ORDENAR POR FECHA (Timestamp)
+        photos.sort((a, b) => {
+          const dateA = new Date(a.timestamp).getTime();
+          const dateB = new Date(b.timestamp).getTime();
+          return dateA - dateB;
+        });
+        console.log('📅 Fotos ordenadas cronológicamente');
 
         // Limpiar marcadores y línea existentes
         this.currentMarkers.forEach(marker => this.map.removeLayer(marker));
@@ -189,7 +207,7 @@ export class MapComponent implements OnInit, AfterViewInit {
           }
         });
 
-        // Dibujar línea conectando los puntos (Estilo Google Street View)
+        //Dibujar línea conectando los puntos(Estilo Google Street View)
         if (routeCoordinates.length > 1) {
           this.currentPolyline = L.polyline(routeCoordinates, {
             color: '#3b82f6', // Azul brillante

@@ -3,4 +3,5 @@ export interface CoordinatesDTO {
     longitude: number;
     altitude?: number;
     accuracy?: number;
+    radius?: number;
 }
