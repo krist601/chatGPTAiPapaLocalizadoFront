@@ -1,6 +1,6 @@
 {
     "/api": {
-        "target": "https://2686a7c7f2bf.ngrok-free.app",
+        "target": "https://7511fb344e93.ngrok-free.app",
         "secure": false,
         "changeOrigin": true,
         "pathRewrite": {
@@ -9,7 +9,7 @@
         "headers": {
             "ngrok-skip-browser-warning": "true",
             "User-Agent": "Angular-Local-Proxy",
-            "Origin": "https://2686a7c7f2bf.ngrok-free.app"
+            "Origin": "https://7511fb344e93.ngrok-free.app"
         },
         "logLevel": "debug"
     },
