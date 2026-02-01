@@ -444,3 +444,54 @@
         display: inline-block;
     }
 }
+
+
+/* Show only Reset and Fullscreen buttons above the photo. Hide other panels. */
+.street-view .simple-controls,
+.street-view .navigation-controls,
+.street-view .nav-info,
+.street-view .photo-info,
+.street-view .photo-overlay {
+    display: none !important;
+}
+
+/* In panorama controls, hide all groups except the special group (contains reset/fullscreen) */
+.street-view .panorama-controls .control-group {
+    display: none;
+}
+.street-view .panorama-controls .control-group.special {
+    display: flex !important;
+    gap: 8px;
+    align-items: center;
+}
+
+/* Position the special controls above the photo (top-right) */
+.street-view .panorama-controls {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    left: auto;
+    bottom: auto;
+    background: transparent;
+    padding: 4px;
+    border-radius: 6px;
+    z-index: 1002;
+    justify-content: flex-end;
+}
+
+.street-view .panorama-controls .nav-btn {
+    padding: 8px 10px;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    color: white;
+    background: rgba(0, 0, 0, 0.6);
+    border: none;
+}
+
+.street-view .panorama-controls .nav-btn.reset {
+    background: rgba(255, 87, 34, 0.95) !important;
+}
+.street-view .panorama-controls .nav-btn.fullscreen {
+    background: rgba(96, 125, 139, 0.95) !important;
+}
+

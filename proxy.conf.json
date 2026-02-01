@@ -1,6 +1,7 @@
 {
     "/api": {
-        "target": "https://7511fb344e93.ngrok-free.app",
+
+       "target": "http://localhost:3000",
         "secure": false,
         "changeOrigin": true,
         "pathRewrite": {
@@ -9,7 +10,7 @@
         "headers": {
             "ngrok-skip-browser-warning": "true",
             "User-Agent": "Angular-Local-Proxy",
-            "Origin": "https://7511fb344e93.ngrok-free.app"
+            "Origin": "http://localhost:3000"
         },
         "logLevel": "debug"
     },

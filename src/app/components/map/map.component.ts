@@ -5,6 +5,13 @@ import { StreetViewService } from '../../services/street-view.service';
 import { PhotoDTO } from '../../models/photo.dto';
 import { CoordinatesDTO } from '../../models/coordinates.dto';
 
+// Configurar los iconos de Leaflet
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'assets/leaflet/images/marker-icon-2x.png',
+  iconUrl: 'assets/leaflet/images/marker-icon.png',
+  shadowUrl: 'assets/leaflet/images/marker-shadow.png'
+});
+
 interface MockMarker {
   lat: number;
   lng: number;
