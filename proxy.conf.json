@@ -1,6 +1,29 @@
 {
+    "/api/photos": {
+        "target": "http://localhost:3000",
+        "secure": false,
+        "changeOrigin": true,
+        "pathRewrite": {
+            "^/api/photos": "/photos"
+        },
+        "headers": {
+            "ngrok-skip-browser-warning": "true"
+        },
+        "logLevel": "debug"
+    },
+    "/api/houses": {
+        "target": "http://localhost:3001",
+        "secure": false,
+        "changeOrigin": true,
+        "pathRewrite": {
+            "^/api/houses": "/houses"
+        },
+        "headers": {
+            "ngrok-skip-browser-warning": "true"
+        },
+        "logLevel": "debug"
+    },
     "/api": {
-
        "target": "http://localhost:3000",
         "secure": false,
         "changeOrigin": true,

@@ -2,6 +2,9 @@ import { Component, OnInit, AfterViewInit } from '@angular/core';
 import * as L from 'leaflet';
 import { MapService } from '../../services/map.service';
 import { StreetViewService } from '../../services/street-view.service';
+import { StreetMapService } from '../../street/street-map.service';
+import { ImageSearchService } from '../../street/image-search.service';
+import { HouseSearchService } from '../../street/house-search.service';
 import { PhotoDTO } from '../../models/photo.dto';
 import { CoordinatesDTO } from '../../models/coordinates.dto';
 
@@ -34,7 +37,10 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   constructor(
     private mapService: MapService,
-    private streetViewService: StreetViewService
+    private streetViewService: StreetViewService,
+    private streetMapService: StreetMapService,
+    private imageSearchService: ImageSearchService,
+    private houseSearchService: HouseSearchService
   ) { }
 
   ngOnInit() {
@@ -119,6 +125,9 @@ export class MapComponent implements OnInit, AfterViewInit {
       this.addMarkersToMap(customIcon);
     }, 100);
 
+    // Attach map to street map helper
+    this.streetMapService.attachMap(this.map);
+
     // Listener para clicks en el mapa
     this.map.on('click', (e: L.LeafletMouseEvent) => {
       this.onMapClick(e);
@@ -169,7 +178,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   loadPhotos(coordinates: CoordinatesDTO) {
     console.log('🔄 PASO 4: loadPhotos() iniciado con:', coordinates);
 
-    this.mapService.getPhotosByCoordinates(coordinates).subscribe({
+    this.imageSearchService.getPhotosByCoordinates(coordinates).subscribe({
       next: (photos) => {
         console.log('📸 PASO 5: Fotos recibidas desde servicio:', photos);
         console.log('📸 PASO 6: Número de fotos:', photos.length);
@@ -182,52 +191,25 @@ export class MapComponent implements OnInit, AfterViewInit {
         });
         console.log('📅 Fotos ordenadas cronológicamente');
 
-        // Limpiar marcadores y línea existentes
-        this.currentMarkers.forEach(marker => this.map.removeLayer(marker));
-        this.currentMarkers = [];
-
-        if (this.currentPolyline) {
-          this.map.removeLayer(this.currentPolyline);
-          this.currentPolyline = null;
-        }
-
-        const routeCoordinates: L.LatLngExpression[] = [];
-
-        photos.forEach((photo) => {
-          if (photo.coordinates) {
-            const latLng: L.LatLngExpression = [photo.coordinates.latitude, photo.coordinates.longitude];
-            routeCoordinates.push(latLng);
-
-            const marker = L.marker(latLng)
-              .addTo(this.map)
-              .bindPopup(`
-                 <div style="text-align: center;">
-                   <p><strong>📸 Photo Available</strong></p>
-                   <small>Click to view</small>
-                 </div>
-               `)
-              .on('click', () => {
-                this.selectedPhoto = photo;
-                this.streetViewService.showStreetView(photo);
-              });
-            this.currentMarkers.push(marker);
-          }
+        // Delegar a StreetMapService para dibujar marcadores y polilínea
+        this.streetMapService.updateRoute(photos, (photo) => {
+          this.selectedPhoto = photo;
+          this.streetViewService.showStreetView(photo);
         });
 
-        //Dibujar línea conectando los puntos(Estilo Google Street View)
-        if (routeCoordinates.length > 1) {
-          this.currentPolyline = L.polyline(routeCoordinates, {
-            color: '#3b82f6', // Azul brillante
-            weight: 5,
-            opacity: 0.7,
-            smoothFactor: 1
-          }).addTo(this.map);
-
-          // Opcional: Ajustar vista para ver toda la ruta
-          // this.map.fitBounds(this.currentPolyline.getBounds());
-          console.log('🛣️ Ruta dibujada con', routeCoordinates.length, 'puntos');
-        }
-
+        // Además, cargar casas en la misma área y dibujarlas con icono de casa
+        this.houseSearchService.getHousesByCoordinates(coordinates).subscribe({
+          next: (houses) => {
+            // Abrir el anuncio al hacer click
+            this.streetMapService.addHouseMarkers(houses, (house) => {
+              // Abrir la URL del listado en una pestaña nueva
+              try { window.open(house.url, '_blank'); } catch (e) { console.log('Open house URL', e); }
+            });
+          },
+          error: (err) => {
+            console.error('Error cargando houses:', err);
+          }
+        });
 
         if (photos.length > 0) {
           this.selectedPhoto = photos[0];
@@ -237,7 +219,6 @@ export class MapComponent implements OnInit, AfterViewInit {
           console.log('✅ PASO 9: ¡Foto enviada al servicio exitosamente!');
         } else {
           console.log('❌ PASO 7: No se encontraron fotos');
-          // Informar al usuario
           L.popup()
             .setLatLng([coordinates.latitude, coordinates.longitude])
             .setContent('<p>⚠️ No images found at this location.</p>')
@@ -262,6 +243,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.selectedLocation = null;
     this.selectedPhoto = null;
     this.streetViewService.setPhoto(null);
+    this.streetMapService.clear();
   }
 
   exploreLocation(location: MockMarker) {
