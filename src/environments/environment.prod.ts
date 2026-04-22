@@ -5,5 +5,6 @@ export const environment = {
   defaultLocation: {
     latitude: 0,
     longitude: 0
-  }
+  },
+  showHouses: false
 };

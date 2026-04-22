@@ -3,7 +3,8 @@ export const environment = {
   apiUrl: 'http://localhost:3000/api',
   mapApiKey: 'YOUR_MAP_API_KEY',
   defaultLocation: {
-    latitude: 37.7749,
-    longitude: -122.4194
-  }
+    latitude: 40.4665,
+    longitude: -79.97838888888889
+  },
+  showHouses: false
 };

@@ -7,6 +7,7 @@ import { ImageSearchService } from '../../street/image-search.service';
 import { HouseSearchService } from '../../street/house-search.service';
 import { PhotoDTO } from '../../models/photo.dto';
 import { CoordinatesDTO } from '../../models/coordinates.dto';
+import { environment } from '../../../environments/environment';
 
 // Configurar los iconos de Leaflet
 L.Icon.Default.mergeOptions({
@@ -34,6 +35,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   mockMarkers: MockMarker[] = [];
   selectedLocation: MockMarker | null = null;
   selectedPhoto: PhotoDTO | null = null;
+  showHouses = environment.showHouses;
 
   constructor(
     private mapService: MapService,
@@ -51,11 +53,11 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   private initializeMap() {
-    // Crear el mapa centrado en Pittsburgh (default) con configuración optimizada
-    const pittsburghCoords: [number, number] = [40.4406, -79.9959];
+    // Crear el mapa centrado en la ubicación por defecto con configuración optimizada
+    const defaultCoords: [number, number] = [environment.defaultLocation.latitude, environment.defaultLocation.longitude];
 
     this.map = L.map('map', {
-      center: pittsburghCoords,
+      center: defaultCoords,
       zoom: 13,
       zoomControl: true,
       attributionControl: true,
@@ -66,8 +68,8 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     // Cargar fotos automáticamente en la ubicación por defecto
     this.loadPhotos({
-      latitude: pittsburghCoords[0],
-      longitude: pittsburghCoords[1]
+      latitude: defaultCoords[0],
+      longitude: defaultCoords[1]
     });
 
     // Intentar obtener la ubicación del usuario
@@ -198,18 +200,20 @@ export class MapComponent implements OnInit, AfterViewInit {
         });
 
         // Además, cargar casas en la misma área y dibujarlas con icono de casa
-        this.houseSearchService.getHousesByCoordinates(coordinates).subscribe({
-          next: (houses) => {
-            // Abrir el anuncio al hacer click
-            this.streetMapService.addHouseMarkers(houses, (house) => {
-              // Abrir la URL del listado en una pestaña nueva
-              try { window.open(house.url, '_blank'); } catch (e) { console.log('Open house URL', e); }
-            });
-          },
-          error: (err) => {
-            console.error('Error cargando houses:', err);
-          }
-        });
+        if (this.showHouses) {
+          this.houseSearchService.getHousesByCoordinates(coordinates).subscribe({
+            next: (houses) => {
+              // Abrir el anuncio al hacer click
+              this.streetMapService.addHouseMarkers(houses, (house) => {
+                // Abrir la URL del listado en una pestaña nueva
+                try { window.open(house.url, '_blank'); } catch (e) { console.log('Open house URL', e); }
+              });
+            },
+            error: (err) => {
+              console.error('Error cargando houses:', err);
+            }
+          });
+        }
 
         if (photos.length > 0) {
           this.selectedPhoto = photos[0];
